@@ -29,6 +29,7 @@ function connectCallback() {
 }
 
 
+
 /**
  * Desc: Function called after each update in price via stomp to update UI
  * @params message
@@ -43,11 +44,7 @@ pricesUpdated = function(message) {
     //If the currency pair already exist
     if (currencyMatchIndex !== -1) {
 
-        //If midvalues are over 30 remove the last midvalue
-        if (currencyValues[currencyMatchIndex].midValues.length === 30) {
-            currencyValues[currencyMatchIndex].midValues.splice(0, 1);
-        }
-        currencyValues[currencyMatchIndex].midValues.push((message.bestBid + message.bestAsk) / 2);
+        currencyValues[currencyMatchIndex].midValues = insert(currencyValues[currencyMatchIndex].midValues, (message.bestBid + message.bestAsk) / 2)
 
         //Update values for the currency pair
         Object.keys(currencyValues[currencyMatchIndex]).forEach(element => {
@@ -65,7 +62,7 @@ pricesUpdated = function(message) {
 
         //Push the new currency in currency value
         message.midValues = [];
-        message.midValues.push((message.bestBid + message.bestAsk) / 2);
+        message.midValues = insert(message.midValues, (message.bestBid + message.bestAsk) / 2);
         currencyValues.push(message);
         currencyValues.sort(compareValues('lastChangeBid'));
 
@@ -118,7 +115,6 @@ function createCurrencyTable(message, currencyTable) {
         }
     });
     newCell = newRow.insertCell(c);
-
     let midValueSparkline = new Sparkline(newCell);
     midValueSparkline.draw(message.midValues);
 }
@@ -146,6 +142,23 @@ function compareValues(key) {
         }
         return comparison;
     };
+}
+
+/**
+ * Desc:: Helper function to push an item into an array that auto removes after
+ * 30 secs
+ * @param array 
+ * @param item 
+ */
+function insert(array, item){
+    array.push(item);
+    setTimeout(() => {
+        const index = array.indexOf(item);
+        if(index !== -1){
+            array.splice(0, index);
+        }
+    }, 30000);
+    return array;
 }
 
 
